@@ -1,11 +1,13 @@
-#!/usr/bin/env node
+#!/usr/bin/env node //表明是node可执行文件
 
 /**
  * Module dependencies.
  */
-
+//引入我们在app.js中导出的app模块
 var app = require('../app');
-var debug = require('debug')('mockserver:server');
+//引入debuger模块，打印调试日志
+var debug = require('debug')('hello:server');
+//引入http模块
 var http = require('http');
 
 /**
@@ -13,20 +15,22 @@ var http = require('http');
  */
 
 var port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
+app.set('port', port);  //设置端口号
 
 /**
  * Create HTTP server.
  */
-
+//创建Http服务器
 var server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.
  */
-
+//监听指定的端口
 server.listen(port);
+//监听error事件。 onError是发生错误的时候的回调函数
 server.on('error', onError);
+//监听listening事件
 server.on('listening', onListening);
 
 /**
@@ -76,7 +80,6 @@ function onError(error) {
       throw error;
   }
 }
-
 /**
  * Event listener for HTTP server "listening" event.
  */
