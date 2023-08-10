@@ -1,16 +1,24 @@
 {
-  "name": "mockserver",
-  "version": "0.0.0",
-  "private": true,
+  "name": "stock",
+  "version": "1.0.0",
+  "description": "haha",
+  "main": "app.js",
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node app.js"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "latest",
+    "boom": "latest",
     "cookie-parser": "~1.4.4",
-    "debug": "~2.6.9",
-    "express": "~4.16.1",
+    "cors": "latest",
+    "express": "latest",
+    "express-jwt": "^8.4.1",
+    "express-validator": "latest",
     "http-errors": "~1.6.3",
-    "jade": "~1.11.0",
-    "morgan": "~1.9.1"
-  }
+    "jsonwebtoken": "latest",
+    "mongoose": "latest"
+  },
+  "author": "James, Xiaokai",
+  "license": "ISC"
 }
