@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { body } = require('express-validator');
-const service = require('../services/userService');
+const {body} = require('express-validator');
+const service = require('../controller/userService');
 
 // 登录/注册校验
 const vaildator = [
