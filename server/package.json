@@ -13,7 +13,7 @@
     "cookie-parser": "~1.4.4",
     "cors": "latest",
     "express": "latest",
-    "express-jwt": "^8.4.1",
+    "express-jwt": "^6.1.0",
     "express-validator": "latest",
     "http-errors": "~1.6.3",
     "jsonwebtoken": "latest",
