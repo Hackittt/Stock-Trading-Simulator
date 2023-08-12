@@ -1,0 +1,3 @@
+curl -d "email=testmail2@test.com&password=1234" http://localhost:8088/api/login
+
+curl -H "Authorization: Bearer {token}" http://localhost:8088/protected

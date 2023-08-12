@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const boom = require('boom');
 const mongoose = require('mongoose');
 const {body, validationResult } = require('express-validator');
-// const {decode} = require('../utils/user-jwt');
+// const {jwtAuth, decode} = require('../utils/user-jwt');
 const {USER} = require('../db/dbConfig')
 const {
   CODE_ERROR,
@@ -19,7 +19,7 @@ async function login(req, res, next) {
   try {
     const err = validationResult(req);
     if (!err.isEmpty()) {
-      const [{ msg }] = err.errors;
+      const [{msg}] = err.errors;
       return next(boom.badRequest(msg));
     }
     else {
@@ -45,22 +45,22 @@ async function login(req, res, next) {
 
 
       const token = jwt.sign(
-        { email },
+        {email},
         PRIVATE_KEY,
-        { expiresIn: JWT_EXPIRED }
+        {expiresIn: JWT_EXPIRED}
       );
 
-      // const userData = {
-      //   id: USER._id,
-      //   email: USER.email
-      // };
+      const userData = {
+        id: user._id,
+        email: user.email
+      };
 
       res.json({
         code: CODE_SUCCESS,
         msg: '登录成功',
         data: {
-          token
-          // userData
+          token,
+          userData
         }
       });
     }
@@ -104,10 +104,10 @@ async function register(req, res, next) {
           {expiresIn: JWT_EXPIRED}
         );
 
-        // const userData = {
-        //   id: USER._id,
-        //   email: USER.email
-        // };
+        const userData = {
+          // id: newUSER._id,
+          email: newUser.email
+        };
 
         res.json({
           code: CODE_SUCCESS,
