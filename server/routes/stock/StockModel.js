@@ -2,34 +2,31 @@ const { default: mongoose } = require('mongoose');
 const CustomQueue = require('./CustomQueue');
 const axios = require('axios');
 
-const queue = new CustomQueue(1);
-const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
+const queue = new CustomQueue(8);
+// const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 
 class StockModel {
     constructor() {
+        this.token = 'token=5d79204ced17131a710c6d0e58163796eb999e1e';
         this.dataLicence = '2ab8ed1b964913334';
-        this.token = 'token=0693b69e800f4083c3b95d6e558bd400ee6826e7';
         mongoose.connect('mongodb://127.0.0.1/test');
-        this.MAXCOUNT = 400;
+        this.MAXCOUNT = 4;
+
         this.db = mongoose.connection;
         this.db.on('error', console.error.bind(console, 'connection error'));
+
         this.stockSchema = null;
         this.k_listSchema = null;
         this.historySchema = null;
         this.positionSchema = null;
         this.optionalSchema = null;
         this.fundSchema = null;
+
             // 股票
             this.stockSchema = mongoose.Schema({
                 name : String,              // 股票名
                 code : {type : String, unique : true},              // 代码
                 position : Array,           // 所属板块
-                market : String,            // 上市市场
-                principal : String,         // 主承销商
-                rdate : Date,               // 成立日期
-                addr : String,              // 注册地址
-                rprice : String,            // 注册资本
-                desc : String               // 公司简介
                 // high : Number,              // 今日最高价
                 // low : Number,               // 昨日最低价
                 // current : Number,           // 现价
@@ -94,47 +91,9 @@ class StockModel {
     async start() {
         // 初始化股票列表
         await this.initStock();
-
-        // 获取公司
-        await this.stock.find().sort('code').then(async res => {
-            for (let i = 0; i < res.length; i++) {
-                await sleep(10);
-                queue.add(async () => {
-                    await axios.get('http://api.mairui.club/hscp/gsjj/' + res[i].code.slice(2) + '/' + this.dataLicence)
-                    .then(response => {
-                        const body = response.data;
-
-                        if (body.Message) {
-                            return console.log(res[i].code + ' no data');
-                        }
-
-                        res[i].addr = body.addr;
-                        res[i].market = body.market;
-                        res[i].rdate = body.rdate;
-                        res[i].rprice = body.rprice;
-                        res[i].principal = body.principal;
-                        res[i].desc = body.desc;
-
-                        let arr = body.idea.split(',');
-                        for (let j = 0; j < arr.length; j++) {
-                            res[i].position[j] = arr[j];
-                        }
-
-                        return res[i].save();
-                    })
-                    .then(result => {
-                        console.log(result);
-                    })
-                    .catch(error => {
-                        console.log(error);
-                    });
-                });
-            }
-        });
-
         // 获取历史数据
         await this.stock.find().sort('code').then(async res => {
-            for (let i = 0; i < this.MAXCOUNT; i++) {
+            for (let i = 0; i < res.length; i++) {
                 queue.add(async () => {
                     await this.initStockHistory(res[i].code);
                 });
@@ -166,28 +125,44 @@ class StockModel {
 
     // 初始化股票列表
     async initStock() {
-        axios.get('http://api.mairui.club/hslt/list/' + this.dataLicence)
+        axios.get('https://api.tiingo.com/iex?' + this.token)
         .then(response => {
             const body = response.data;
-            for (let i = 0; i < body.length; i++) {
+            for (let i = 0; i < body.length && i < this.MAXCOUNT; i++) {
             let stock = new this.stock();
-            stock.name = body[i].mc;
-            stock.code = body[i].jys + body[i].dm;
+            stock.code = body[i].ticker;
             stock.save().then(result => {
                 console.log(result);
             }).catch(error => {
                 console.log(error);
             });
             }
-        })
-        .catch(error => {
-            console.log(error);
         });
+
+        this.stock.find().then(res => {
+            for (let i = 0; i < res.length; i++) {
+                axios.get('http://api.mairui.club/hscp/gsjj/' + res[i].code + '/' + this.dataLicence)
+                .then(response => {
+                    if (!response.data.name) {
+                        return;
+                    }
+                    res[i].name = response.data.name;
+                    res[i].save().then(result => {
+                        console.log(result);
+                    }).catch(error => {
+                        console.log(error);
+                    })
+                })
+                .catch(error => {
+                    console.log(error);
+                })
+            }
+        })
     }
 
     // 初始化历史数据
     async initStockHistory(code) {
-        axios.get('https://api.tiingo.com/tiingo/daily/' + code.slice(2) + '/prices?' + this.token + '&startDate=2022-1-1&endDate=2023-8-4')
+        axios.get('https://api.tiingo.com/tiingo/daily/' + code + '/prices?' + this.token + '&startDate=2023-7-1&endDate=2023-8-13')
         .then(res => {
             let data = res.data;
             for (let i = 0; i < data.length; i++) {
@@ -210,9 +185,9 @@ class StockModel {
 
     // 更新日线数据
     async updateDaily(code) {
-        axios.get('https://api.tiingo.com/tiingo/daily/' + code.slice(2) + '/prices?' + this.token)
+        axios.get('https://api.tiingo.com/tiingo/daily/' + code + '/prices?' + this.token)
         .then(res => {
-            let data = res.data;
+            let data = res.data[0];
             let kval = new this.k_list();
             kval.code = code;
             kval.date = data.date;
@@ -235,9 +210,30 @@ class StockModel {
         return res;
     }
 
+    // 筛选器
+    async sizer(param) {
+        let laster = await this.k_list.find().sort({'date' : -1}).limit(1);
+        let date = laster[0].date;
+
+        let res = this.k_list.find({'date' : date});
+        for (let i = 0; i < param.length; i++) {
+            if (!('low' in param[i])) {
+                param[i].low = -1e18;
+            }
+            if (!('high' in param[i])) {
+                param[i].high = 1e18;
+            }
+            res = res.find({$and : [
+                {[param[i].name] : {$gt : param[i].low}},
+                {[param[i].name] : {$lt : param[i].high}}
+            ]});
+        }
+        res = await res.find();
+        return res;
+    }
+
     // 获取某股日K
     async getKList(code) {
-        console.log(typeof(code));
         let res = await this.k_list.find({code : code}).sort('date');
         return res;
     }

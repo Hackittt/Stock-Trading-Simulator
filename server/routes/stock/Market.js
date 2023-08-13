@@ -1,11 +1,15 @@
-var express = require('express');
-var model = require('./StockModel');
+let express = require('express');
+let model = require('./StockModel');
 let querystring = require('querystring');
 let url = require('url');
-var router = express.Router();
+let router = express.Router();
+
+router.use(express.json());
+router.use(express.urlencoded({extended : true}));
 
 let stockModel = model();
 
+// 获取行情
 router.get('/hq', async(req, res) => {
     let arg = url.parse(req.url).query;
     let params = querystring.parse(arg);
@@ -20,9 +24,27 @@ router.get('/hq', async(req, res) => {
         list[i].amplitude = stockModel.calAmplitude(list[i].high, list[i].low);
     }
     res.json(list);
-})
+});
+
+// 筛选器
+router.get('/sizer', async(req, res) => {
+    let body = req.body;
+    for (let i = 0; i < body.length; i++) {
+        if (!('name' in body[i])) {
+            res.status(400).send('Bad Request: Invalid parameters');
+        } if ('low' in body[i] && typeof body[i].low != 'number') {
+            res.status(400).send('Bad Request: Invalid parameters');
+        } if ('high' in body[i] && typeof body[i].high != 'number') {
+            res.status(400).send('Bad Request: Invalid parameters');
+        }
+    }
+
+    let list = await stockModel.sizer(body);
+    res.json(list);
+});
 
 router.get('/', function(req, res, next) {
+    console.log(req.body);
     res.render('index', { title: 'Express' });
 });
 
@@ -67,6 +89,6 @@ router.get('/position', async(req, res) => {
         list[i].price = stockModel.getOpen(lsit[i].code);
     }
     res.json(list);
-})
+});
 
 module.exports = router;
