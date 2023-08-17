@@ -1,4 +1,4 @@
-const {default: mongoose} = require('mongoose');
+const mongoose = require('mongoose');
 const axios = require('axios');
 const CustomQueue = require('../utils/CustomQueue'); 
 // const mon = require('../db/dbConfig')
@@ -108,12 +108,15 @@ class StockModel {
 
         // 更新当日日线数据
         this.stock.find().then(res => {
-            for (let i = 0; i < this.MAXCOUNT; i++) {
-                queue.add(async () => {
-                    await this.updataDaily(res[i].code);
-                });
+            for (let i = 0; i < Math.min(this.MAXCOUNT, res.length); i++) {
+                if (res[i]) { //确保 res[i] 存在
+                    queue.add(async () => {
+                        await this.updateDaily(res[i].code);
+                    });
+                }
             }
         });
+
 
         let delta = 0;
         if (date.getHours() >= 15) {
@@ -257,15 +260,6 @@ class StockModel {
         return res[0].volume;
     }
 
-    // 获取当日成交量
-    async getVolume(code) {
-        let res = await this.k_list.find({code : code}).sort('date').limit(1);
-        if (!res.length) {
-            return null;
-        }
-        return res[0].volume;
-    }
-
     // 获取当日最高价
     async getHigh(code) {
         let res = await this.k_list.find({code : code}).sort('date').limit(1);
@@ -350,7 +344,7 @@ class StockModel {
     }
 
     // 删除自选
-    async addOptional(userid, code) {
+    async deleteOptional(userid, code) {
         await this.optional.updateOne(
             {userid : userid},
             {$push : {codeArray : code}}

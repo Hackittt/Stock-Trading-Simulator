@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router(); 
 const userRouter = require('./users'); 
 const taskRouter = require('./tasks'); 
-const {jwtAuth, decode} = require('../utils/user-jwt'); 
+const {jwtAuth, getKey, decode} = require('../utils/user-jwt'); 
+
 
 router.use(jwtAuth); 
 
@@ -13,9 +14,9 @@ router.use('/api', userRouter);
 router.use('/api', taskRouter); 
 
 
-// router.get('/protected', (req, res) => {
-//   res.json({ message: 'Access granted to protected route' });
-// });
+router.get('/protected', (req, res) => {
+  res.json({ message: 'Access granted to protected route' });
+});
 
 router.use((err, req, res, next) => {
   // 自定义用户认证失败的错误返回

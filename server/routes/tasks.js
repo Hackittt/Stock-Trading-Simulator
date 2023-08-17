@@ -7,7 +7,7 @@ const model = require('../controller/taskService');
 router.use(express.json());
 router.use(express.urlencoded({extended : true}));
 
-let stockModel = model();
+// let stockModel = model();
 
 router.get('/', function(req, res, next) {
     console.log(req.body);
