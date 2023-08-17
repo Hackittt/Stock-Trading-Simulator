@@ -1,9 +1,10 @@
-const { compare, crypt } = require('../utils/bcrypt');
+const {compare, crypt} = require('../utils/bcrypt');
+const {settoken} = require('../utils/user-jwt');
 const jwt = require('jsonwebtoken');
 // const expressJwt = require('express-jwt');
 const boom = require('boom');
 const mongoose = require('mongoose');
-const {body, validationResult } = require('express-validator');
+const {body, validationResult} = require('express-validator');
 // const {jwtAuth, decode} = require('../utils/user-jwt');
 const {USER} = require('../db/dbConfig')
 const {
@@ -44,11 +45,13 @@ async function login(req, res, next) {
       }
 
 
-      const token = jwt.sign(
-        {email},
-        PRIVATE_KEY,
-        {expiresIn: JWT_EXPIRED}
-      );
+      // const token = jwt.sign(
+      //   {email},
+      //   PRIVATE_KEY,
+      //   {expiresIn: JWT_EXPIRED}
+      // );
+
+      const token = settoken(email);
 
       const userData = {
         id: user._id,
@@ -98,11 +101,7 @@ async function register(req, res, next) {
 
         await newUser.save();
 
-        const token = jwt.sign(
-          {email},
-          PRIVATE_KEY,
-          {expiresIn: JWT_EXPIRED}
-        );
+        const token = settoken(email);
 
         const userData = {
           // id: newUSER._id,
