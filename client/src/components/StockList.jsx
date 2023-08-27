@@ -25,29 +25,34 @@ class StockList extends Component {
         }
 
         return (
-            <table className="table">
-                <thead>
-                    <tr>
-                        <th>代码</th>
-                        <th>名称</th>
-                        <th>现价</th>
-                        <th>成交量</th>
-                        <th>振幅</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {this.state.stocks.map(stock => (
+            <div className='d-flex p-2'>
+                <table className="table table-striped table-borderless">
+                    <thead>
                         <tr>
-                            <td>{stock.code}</td>
-                            <td>{stock.name}</td>
-                            <td>{stock.close}</td>
-                            <td>{stock.volume}</td>
-                            <td>{stock.amplitude.toFixed(2)}</td>
-                            <td><button className='btn btn-danger'>加自选</button></td>
+                            <th scope='col'>代码</th>
+                            <th scope='col'>名称</th>
+                            <th scope='col'>现价</th>
+                            <th scope='col'>成交量</th>
+                            <th scope='col'>振幅</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {this.state.stocks.map(stock => 
+                        {
+                            const color = 'text-success';
+                            return (
+                            <tr>
+                                <th scope='row'>{stock.code}</th>
+                                <td>{stock.name}</td>
+                                <td className={color}>{stock.close}</td>
+                                <td className={color}>{stock.volume}</td>
+                                <td className={color}>{stock.amplitude.toFixed(2)}</td>
+                                <td><button className='btn btn-primary'>加自选</button></td>
+                            </tr>
+                        )})}
+                    </tbody>
+                </table>
+            </div>
         );
     }
 }
