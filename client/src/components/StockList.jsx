@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
+import StockFilter from './stockFilter';
 
 class StockList extends Component {
     state = {
@@ -9,8 +10,33 @@ class StockList extends Component {
     };
 
     componentDidMount() {
-        const page = this.state.searchParams.get('page');
-        axios.get('market/hq?page=' + page)
+        let page = this.state.searchParams.get('page');
+        if (page === null) {
+            page = 1;
+        }
+        axios.get('api/market/hq?page=' + page)
+        .then(res => {
+            this.setState({
+                stocks : res.data,
+                isLoaded : true
+            });
+        });
+    }
+
+    filter = (minVolume, maxVolume, minPrice, maxPrice, minAmplitude, maxAmplitude) => {
+        const data = [
+            {
+                name : 'volume',
+                low : parseInt(minVolume),
+                high : parseInt(maxVolume)
+            },
+            {
+                name : 'close',
+                low : parseInt(minPrice),
+                high : parseInt(maxPrice)
+            }
+        ];
+        axios.post('api/market/sizer', data)
         .then(res => {
             this.setState({
                 stocks : res.data,
@@ -26,6 +52,7 @@ class StockList extends Component {
 
         return (
             <div className='d-flex p-2'>
+                <StockFilter  filter={this.filter}/>
                 <table className="table table-striped table-borderless">
                     <thead>
                         <tr>
