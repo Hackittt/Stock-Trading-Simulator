@@ -7,7 +7,7 @@ const model = require('../controller/taskService');
 router.use(express.json());
 router.use(express.urlencoded({extended : true}));
 
-// let stockModel = model();
+let stockModel = model();
 
 router.get('/', function(req, res, next) {
     console.log(req.body);
@@ -32,19 +32,24 @@ router.get('/hq', async(req, res) => {
 });
 
 // 筛选器
-router.get('/sizer', async(req, res) => {
+router.post('/sizer', async(req, res) => {
     let body = req.body;
     for (let i = 0; i < body.length; i++) {
         if (!('name' in body[i])) {
             res.status(400).send('Bad Request: Invalid parameters');
+            return;
         } if ('low' in body[i] && typeof body[i].low != 'number') {
-            res.status(400).send('Bad Request: Invalid parameters');
+            body[i].low = -1e18;
         } if ('high' in body[i] && typeof body[i].high != 'number') {
-            res.status(400).send('Bad Request: Invalid parameters');
+            body[i].high = 1e18;
         }
     }
 
     let list = await stockModel.sizer(body);
+    for (let i = 0; i < list.length; i++) {
+        list[i].name = await stockModel.getStockName(list[i].code);
+        list[i].amplitude = stockModel.calAmplitude(list[i].high, list[i].low);
+    }
     res.json(list);
 });
 
@@ -59,19 +64,13 @@ router.get('/s', async(req, res) => {
 
 // 获取用户历史交易数据
 router.get('/history', async(req, res) => {
-    let arg = url.parse(req.url).query;
-    let params = querystring.parse(arg);
-
-    let list = await stockModel.getHistory(params.userid);
+    let list = await stockModel.getHistory(req.user.email);
     res.json(list);
 });
 
 // 获取用户自选
 router.get('/optional', async(req, res) => {
-    let arg = url.parse(req.url).query;
-    let params = querystring.parse(arg);
-
-    let list = await stockModel.getOptional(params.userid);
+    let list = await stockModel.getOptional(req.user.email);
     for (let i = 0; i < list.length; i++) {
         list[i].price = stockModel.getOpen(list[i].code);
         list[i].volume = stockModel.getVolume(list[i].code);
@@ -81,10 +80,7 @@ router.get('/optional', async(req, res) => {
 
 // 获取用户持仓
 router.get('/position', async(req, res) => {
-    let arg = url.parse(req.url).query;
-    let params = querystring.parse(arg);
-
-    let list = await stockModel.getPosition(params.userid);
+    let list = await stockModel.getPosition(req.user.email);
     for (let i = 0; i < list.length; i++) {
         list[i].price = stockModel.getOpen(lsit[i].code);
     }

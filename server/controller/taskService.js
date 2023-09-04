@@ -84,6 +84,7 @@ class StockModel {
         this.optional = mongoose.model('optional', this.optionalSchema);
         this.fund = mongoose.model('fund', this.fundSchema);
 
+        return;
         this.start();
         this.render();
     }
@@ -221,18 +222,24 @@ class StockModel {
 
         let res = this.k_list.find({'date' : date});
         for (let i = 0; i < param.length; i++) {
+            let low, high;
             if (!('low' in param[i])) {
-                param[i].low = -1e18;
+                low = -1e18;
+            } else {
+                low = param[i].low;
             }
             if (!('high' in param[i])) {
-                param[i].high = 1e18;
+                high = 1e18;
+            } else {
+                high = param[i].high;
             }
             res = res.find({$and : [
-                {[param[i].name] : {$gt : param[i].low}},
-                {[param[i].name] : {$lt : param[i].high}}
+                {[param[i].name] : {$gt : low}},
+                {[param[i].name] : {$lt : high}}
             ]});
         }
-        res = await res.find();
+
+        res = await res.find().lean();
         return res;
     }
 
@@ -357,6 +364,12 @@ class StockModel {
             return null;
         }
         return (high - low) / low * 100;
+    }
+
+    // 获取股票名称
+    async getStockName(code) {
+        let res = await this.stock.find({code : code});
+        return res[0].name;
     }
 };
 
