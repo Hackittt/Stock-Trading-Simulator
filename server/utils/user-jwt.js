@@ -111,7 +111,10 @@ const jwtAuth = expressJwt({
     '/',
     '/api/login',
     '/api/register',
-    '/api/resetPwd'
+    '/api/resetPwd',
+    'api/login',
+    'api/register',
+    'api/resetPwd'
   ]
 });
 
@@ -132,6 +135,7 @@ function decode(req) {
   const token = req.get('Authorization');
   return jwt.verify(token, PRIVATE_KEY);
 }
+
 
 module.exports = {
   jwtAuth,
