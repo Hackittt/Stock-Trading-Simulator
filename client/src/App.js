@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import NavBar from './components/NavBar'; // 导入导航栏组件
-import StockList from './components/StockList';
-import Optional from './components/optional';
-import Position from './components/position';
+import StockList from './views/StockList';
+import Optional from './views/optional';
+import Position from './views/position';
 import LogIn from './views/login';
 import SignUp from './views/register';
 
