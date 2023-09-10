@@ -1,17 +1,14 @@
 const mongoose = require('mongoose');
 const axios = require('axios');
 const CustomQueue = require('../utils/CustomQueue'); 
-// const mon = require('../db/dbConfig')
 
 const queue = new CustomQueue(8);
-// const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 
 class StockModel {
     constructor() {
         this.token = 'token=5d79204ced17131a710c6d0e58163796eb999e1e';
         this.dataLicence = '2ab8ed1b964913334';
-        // mongoose.connect('mongodb://127.0.0.1/test');
-        this.MAXCOUNT = 4;
+        this.MAXCOUNT = 20;
 
         this.db = mongoose.connection;
         this.db.on('error', console.error.bind(console, 'connection error'));
@@ -28,13 +25,6 @@ class StockModel {
                 name : String,              // 股票名
                 code : {type : String, unique : true},              // 代码
                 position : Array,           // 所属板块
-                // high : Number,              // 今日最高价
-                // low : Number,               // 昨日最低价
-                // current : Number,           // 现价
-                // turnover : Number,          // 换手率
-                // amplitude : Number,         // 振幅
-                // amount : Number,            // 成交额
-                // outstanding_shares : Number, // 流通股
             });
 
             // 日K
@@ -51,7 +41,7 @@ class StockModel {
             // 交易记录
             this.historySchema = mongoose.Schema({
                 date : {type : Date, default : Date.now()},      // 时间
-                useid : {type : String, index : true}, // 用户ID
+                userid : {type : String, index : true}, // 用户ID
                 code : String,    // 股票代码
                 type : String,    // 交易类型
                 count : Number,   // 交易数量
@@ -139,11 +129,11 @@ class StockModel {
                 console.log(result);
             }).catch(error => {
                 console.log(error);
+                return;
             });
             }
-        });
 
-        this.stock.find().then(res => {
+            this.stock.find().then(res => {
             for (let i = 0; i < res.length; i++) {
                 axios.get('http://api.mairui.club/hscp/gsjj/' + res[i].code + '/' + this.dataLicence)
                 .then(response => {
@@ -162,11 +152,13 @@ class StockModel {
                 })
             }
         })
+    }).catch(error => console.log(error));
+
     }
 
     // 初始化历史数据
     async initStockHistory(code) {
-        axios.get('https://api.tiingo.com/tiingo/daily/' + code + '/prices?' + this.token + '&startDate=2023-7-1&endDate=2023-8-13')
+        axios.get('https://api.tiingo.com/tiingo/daily/' + code + '/prices?' + this.token + '&startDate=2023-8-1&endDate=2023-9-8')
         .then(res => {
             let data = res.data;
             for (let i = 0; i < data.length; i++) {
@@ -221,18 +213,24 @@ class StockModel {
 
         let res = this.k_list.find({'date' : date});
         for (let i = 0; i < param.length; i++) {
+            let low, high;
             if (!('low' in param[i])) {
-                param[i].low = -1e18;
+                low = -1e18;
+            } else {
+                low = param[i].low;
             }
             if (!('high' in param[i])) {
-                param[i].high = 1e18;
+                high = 1e18;
+            } else {
+                high = param[i].high;
             }
             res = res.find({$and : [
-                {[param[i].name] : {$gt : param[i].low}},
-                {[param[i].name] : {$lt : param[i].high}}
+                {[param[i].name] : {$gt : low}},
+                {[param[i].name] : {$lt : high}}
             ]});
         }
-        res = await res.find();
+
+        res = await res.find().lean();
         return res;
     }
 
@@ -303,15 +301,15 @@ class StockModel {
     // 修改持仓
     async modifyPosition(userid, code, count, cost = 0) {
         let old = await this.position.find({userid : userid, code : code});
+        
         let position = new this.position();
         position.userid = userid;
         position.code = code;
-        position.count = position.cost = 0;
         if (old.length) {
-            position.count = old[0].count;
-            position.cost = old[0].cost;
+            position = old[0];
         }
-        if (position.count < 0) {
+
+        if (position.count + count < 0) {
             return false;
         }
 
@@ -319,36 +317,79 @@ class StockModel {
             position.count += count;
             position.cost += cost;
         } else {
+            position.count += count;
             position.cost = position.cost * ((position.count + count) / position.count);
         }
         position.save().then(result => {
             console.log(result);
         }).catch(error => {
             console.log(error);
+            return false;
         });
+
+        let history = new this.history();
+        history.code = code;
+        history.userid = userid;
+        history.count = count;
+        history.type = count > 0 ? "in" : "out";
+        history.cost = -cost;
+        history.save().then(result => {
+            console.log(result);
+        }).catch(error => {
+            console.log(error);
+        });
+
         return true;
+    }
+
+    // 创建用户自选
+    async createOptional(userid) {
+        let isExist = await this.optional.count({userid : userid});
+        if (isExist === 0) {
+            let newUser = new this.optional();
+            newUser.userid = userid;
+            newUser.save().then(result => {
+                console.log(result);
+            }).catch(error => {
+                console.log(error);
+            });
+        }
     }
 
     // 获取用户自选
     async getOptional(userid) {
-        let res = await this.optional.find({userid : userid}).sort('code');
+        await this.createOptional(userid);
+
+        let res = await this.optional.find({userid : userid});
         return res;
     }
 
     // 添加自选
     async addOptional(userid, code) {
-        await this.optional.updateOne(
+        await this.createOptional(userid);
+
+        let exist = await this.isOptional(userid, code);
+        if (exist) {
+            return false;
+        }
+
+        let res = await this.optional.updateOne(
             {userid : userid},
-            {$pull : {codeArray : code}}
+            {$push : {codeArray : code}}
         );
+        console.log(res);
+        return res;
     }
 
     // 删除自选
     async deleteOptional(userid, code) {
-        await this.optional.updateOne(
+        await this.createOptional(userid);
+
+        let res = await this.optional.updateOne(
             {userid : userid},
-            {$push : {codeArray : code}}
+            {$pull : {codeArray : code}}
         );
+        return res;
     }
 
     // 计算振幅
@@ -357,6 +398,90 @@ class StockModel {
             return null;
         }
         return (high - low) / low * 100;
+    }
+
+    // 获取股票名称
+    async getStockName(code) {
+        let res = await this.stock.find({code : code});
+        return res[0].name;
+    }
+
+    // 获取股票总量
+    async getStockCount() {
+        let res = await this.stock.count();
+        return res;
+    }
+
+    // 股票是否属于用户自选
+    async isOptional(userid, code) {
+        let res = await this.optional.find({userid : userid, codeArray : code});
+        if (res.length > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    // 获取持股数
+    async getPositionCount(userid, code) {
+        let isExist = await this.position.count({userid : userid, code : code});
+        if (!isExist) {
+            return 0;
+        }
+
+        let res = await this.position.find({userid : userid, code : code});
+        return res[0].count;
+    }
+
+    // 获取持股成本
+    async getPositionCost(userid, code) {
+        let isExist = await this.position.count({userid : userid, code : code});
+        if (!isExist) {
+            return 0;
+        }
+
+        let res = await this.position.find({userid : userid, code : code});
+        return res[0].cost;
+    }
+
+
+    // 分配用户
+    async createFund(userid) {
+        let isExist = await this.fund.count({userid : userid});
+        if (isExist === 0) {
+            let newUser = new this.fund();
+            newUser.userid = userid;
+            newUser.fund = 1e7;
+            newUser.save().then(result => {
+                console.log(result);
+            }).catch(error => {
+                console.log(error);
+            });
+        }
+    }
+
+    // 获取剩余资金
+    async getFund(userid) {
+        this.createFund(userid);
+
+        let res = await this.fund.find({userid : userid});
+        console.log(res);
+        return res[0].fund;
+    }
+
+    // 修改资金
+    async modifyFund(userid, count) {
+        this.createFund(userid);
+        console.log(count);
+
+        let list = await this.fund.find({userid : userid});
+        let fund = list[0];
+        fund.fund += count;
+        fund.save().then(result => {
+            console.log(result);
+        }).catch(error => {
+            console.log(error);
+        });
     }
 };
 
@@ -368,12 +493,5 @@ function Singleton(){
     }
     return res;
 }
-
-// let Singleton = function() {
-//     if (res === null) {
-//         res = new StockModel();
-//     }
-//     return res;
-// }
 
 module.exports = Singleton;
