@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AppBar, Toolbar, Button, IconButton, Avatar, Typography } from '@mui/material';
 import { Home, ShowChart, Person } from '@mui/icons-material';
-// import { Menu } from 'antd';
-// import { HomeOutlined, UserOutlined, ShoppingOutlined } from '@ant-design/icons';
-// import { Link } from 'react-router-dom';
 
 
 function generateAvatarText(username) {
@@ -20,9 +17,7 @@ function Navbar() {
 
   useEffect(() => {
     // 在组件加载时从数据库中获取用户名
-    // 这里需要根据你的数据库操作方式来实现
-    // 以下示例中假设使用MongoDB驱动程序
-    // 你需要将下面的代码替换为实际的数据库查询操作
+    // 根据数据库操作方式来实现
 
     // const fetchUsernameFromDatabase = async () => {
     //   try {

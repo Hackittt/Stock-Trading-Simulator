@@ -16,8 +16,6 @@ import axios from 'axios';
 function LogIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [result, setResult] = useState("未登录"); // 用于存储返回结果
-  const [showResult, setShowResult] = useState(false); // 控制是否显示结果
 
 
   const handleSubmit = async (e) => {
@@ -30,7 +28,6 @@ function LogIn() {
 
     // console.log(response.msg)
 
-    
     try {
       const response = await axios.post('api/login', {
         email: email,
@@ -46,15 +43,12 @@ function LogIn() {
         // 登录成功
         
         console.log(msg);
-        setResult(token);
-        setShowResult(true);
 
         localStorage.setItem('token', token);
         
       } else {
         // 登录失败
         console.log("nono");
-        setResult(msg);
         setShowResult(true); 
         
       }
@@ -132,7 +126,6 @@ function LogIn() {
       <Box sx={{ marginTop: 8 }}>
         &copy; {new Date().getFullYear()} 最无敌的网站
       </Box>
-      {showResult && <div>{result}</div>} {/* 显示结果 */}
     </Container>
     </div>
   );

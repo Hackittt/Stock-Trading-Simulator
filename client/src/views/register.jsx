@@ -10,32 +10,40 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import axios from 'axios';
-// import FormControlLabel from '@mui/material/FormControlLabel';
-// import Checkbox from '@mui/material/Checkbox';
 
 function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       const response = await axios.post('api/register', {
-        email: "testmail2@test.com",
-        password: "1234",
+        email: email,
+        password: password,
       });
-    
-      console.log('完整响应：', response);
-    
+      
+      console.log('成功响应：', response);
+      
+      const token = response.data.data.token;
+      const msg = response.data.msg;
+
       if (response.data.code === 0) {
-        const msg = response.data.data.msg;
+        // 注册成功
         console.log(msg);
+
+        localStorage.setItem('token', token);
+        
       } else {
-        console.log("nono")
+        // 注册失败
+        console.log(msg);
+        
       }
     } catch (error) {
-      console.error('登录时出错：', error);
+      // 处理请求错误
+      console.error('请求错误：', error);
     }
   };
 
