@@ -85,7 +85,7 @@ class Optional extends Component {
         axios.get('api/optional')
         .then(res => {
             for (let i = 0; i < res.data.length; i++) {
-                res[i].amplitude = res.data[i].amplitude ? res.data[i].amplitude.toFixed(2) : 0;
+                res.data[i].amplitude = res.data[i].amplitude ? res.data[i].amplitude.toFixed(2) : 0;
             }
             this.setState({
                 stocks : res.data,
