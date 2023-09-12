@@ -238,6 +238,8 @@ class StockList extends Component {
         .catch(error => {
             console.log(error);
         });
+
+        this.closeModal();
     }
 
     render() {
@@ -304,4 +306,4 @@ export default (props) => (
         params = {useSearchParams()}
         navigate = {useNavigate()}
     />
-);
+)

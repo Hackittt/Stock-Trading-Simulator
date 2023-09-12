@@ -84,6 +84,9 @@ class Optional extends Component {
     componentDidMount() {
         axios.get('api/optional')
         .then(res => {
+            for (let i = 0; i < res.data.length; i++) {
+                res[i].amplitude = res.data[i].amplitude ? res.data[i].amplitude.toFixed(2) : 0;
+            }
             this.setState({
                 stocks : res.data,
                 isLoaded : true
@@ -148,6 +151,8 @@ class Optional extends Component {
         .catch(error => {
             console.log(error);
         });
+
+        this.closeModal();
     }
 
     render() {
@@ -205,4 +210,4 @@ export default (props) => (
         {...props}
         params = {useSearchParams()}
     />
-);
+)

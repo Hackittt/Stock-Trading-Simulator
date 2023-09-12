@@ -46,6 +46,20 @@ class Optional extends Component {
                 sorter : (a, b) => a.amplitude - b.amplitude
             },
             {
+                title : '数量',
+                dataIndex : 'count',
+                key : 'count',
+                align : 'right',
+                sorter : (a, b) => a.count - b.count
+            },
+            {
+                title : '成本',
+                dataIndex : 'cost',
+                key : 'cost',
+                align : 'right',
+                sorter : (a, b) => a.cost - b.cost
+            },
+            {
                 title : '操作',
                 key : 'action',
                 align : 'center',
@@ -82,8 +96,24 @@ class Optional extends Component {
     };
 
     componentDidMount() {
-        axios.get('api/optional')
+        // 配置拦截器
+        axios.interceptors.request.use(
+          config => {
+            const token = localStorage.getItem('token');
+            if (token) {
+              config.headers['Authorization'] = `Bearer ${token}`;
+            }
+            return config;
+          }, error => {
+            return Promise.reject(error);
+          }
+        );
+        axios.get('api/position')
         .then(res => {
+            for (let i = 0; i < res.data.length; i++) {
+                res[i].cost = res.data[i].cost ? res.data[i].cost.toFixed(2) : 0;
+                res[i].amplitude = res.data[i].amplitude  ? res.data[i].cost.toFixed(2) : 0;
+            }
             this.setState({
                 stocks : res.data,
                 isLoaded : true
@@ -148,6 +178,8 @@ class Optional extends Component {
         .catch(error => {
             console.log(error);
         });
+
+        this.closeModal();
     }
 
     render() {
@@ -205,4 +237,4 @@ export default (props) => (
         {...props}
         params = {useSearchParams()}
     />
-);
+)
