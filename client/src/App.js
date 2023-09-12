@@ -15,7 +15,8 @@ class App extends Component {
             <React.Fragment>
                 <NavBar />
                 <Routes>
-                    <Route path="/" element={<Profile />} />
+                    <Route path="/" element={<LogIn />} />
+                    <Route path="/profile" element={<Profile />} />
                     <Route path="/login" element={<LogIn />} />
                     <Route path="/signup" element={<SignUp />} />
                     <Route path="/stocklist" element={<StockList />} />

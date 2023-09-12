@@ -14,7 +14,14 @@ let USERSchema = new mongoose.Schema({
     password: String
 })
 
+let PERSONALSchema = new mongoose.Schema({
+  email:String,
+  first: String,
+  last: String,
+})
+
 const USER = mongoose.model('USER',USERSchema);
+const PERSONAL = mongoose.model('PERSONAL',PERSONALSchema);
   
-module.exports = {mon,USER};
+module.exports = {mon,USER,PERSONAL};
   

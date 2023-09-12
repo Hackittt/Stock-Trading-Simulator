@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router(); 
 const userRouter = require('./users'); 
 const taskRouter = require('./tasks'); 
+const personalRouter = require('./personal'); 
 const {jwtAuth, getKey, decode} = require('../utils/user-jwt'); 
 
 
@@ -12,6 +13,9 @@ router.use('/api', userRouter);
 
 //加载业务功能路由
 router.use('/api', taskRouter); 
+
+//加载个人信息路由
+router.use('/api', personalRouter); 
 
 
 router.get('/protected', (req, res) => {

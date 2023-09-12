@@ -6,7 +6,7 @@ const boom = require('boom');
 const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 // const {jwtAuth, decode} = require('../utils/user-jwt');
-const { USER } = require('../db/dbConfig')
+const { USER, PERSONAL } = require('../db/dbConfig')
 const {
   CODE_ERROR,
   CODE_SUCCESS,
@@ -15,12 +15,12 @@ const {
 } = require('../utils/constant');
 
 
-async function login(req, res, next){
+async function login(req, res, next) {
   await loginto(req, res)
   console.log("登录响应发送完毕")
 }
 
-async function register(req, res, next){
+async function register(req, res, next) {
   await registerto(req, res)
   console.log("注册响应发送完毕")
 }
@@ -112,6 +112,15 @@ async function registerto(req, res, next) {
 
         await newUser.save();
 
+        const newPersonal = new PERSONAL({
+          email,
+          first: '',
+          last: ''
+        });
+
+        await newPersonal.save();
+
+
         const token = settoken(email);
 
         const userData = {
@@ -138,20 +147,41 @@ async function registerto(req, res, next) {
 // 重置密码
 async function resetPwd(req, res, next) {
   try {
+    console.log('开始重置')
+    console.log(req.body)
     const err = validationResult(req);
     if (!err.isEmpty()) {
       const [{ msg }] = err.errors;
       return next(boom.badRequest(msg));
     }
     else {
+
       let { email, oldPassword, newPassword } = req.body;
-      oldPassword = crypt(oldPassword);
 
-      const user = await USER.findOne({ email, password: oldPassword });
 
-      if (user) {
+      const user = await USER.findOne({ email });
+      if (!user) {
+        console.log('没有找到用户');
+        return res.status(400).json({
+          code: CODE_ERROR,
+          msg: '用户名或密码错误',
+          data: null
+        });
+      }
+
+      console.log('用户存在');
+
+      const isMatch = await compare(oldPassword, user.password);
+      if (!isMatch) {
+        console.log('密码不匹配');
+        return res.status(400).json({
+          code: CODE_ERROR,
+          msg: '用户名或密码错误',
+          data: null
+        });
+      } else {
         if (newPassword) {
-          const hashedNewPassword = crypt(newPassword);
+          const hashedNewPassword = await crypt(newPassword);
           await USER.updateOne({ email }, { password: hashedNewPassword });
 
           res.json({
@@ -166,12 +196,7 @@ async function resetPwd(req, res, next) {
             data: null
           });
         }
-      } else {
-        res.json({
-          code: CODE_ERROR,
-          msg: '用户名或旧密码错误',
-          data: null
-        });
+
       }
     }
   } catch (error) {
@@ -180,8 +205,34 @@ async function resetPwd(req, res, next) {
   }
 }
 
+// 通过用户名更新密码
+async function updatePassword(email, newPassword) {
+  try {
+    // 查找用户
+    const user = await USER.findOne({ email });
+
+    if (!user) {
+      console.log('未找到具有此邮箱的用户');
+      return;
+    }
+
+    // 更新用户的密码
+    const updatedUser = await USER.findOneAndUpdate(
+      { email },
+      { password: newPassword },
+      { new: true }
+    );
+
+    console.log('成功更新用户密码', updatedUser);
+  } catch (error) {
+    console.error('查找用户和更新密码时出错', error);
+  }
+}
+
+
 // 通过用户名查询用户信息
 async function findUser(email) {
+  console.log(email);
   const user = await USER.findOne({ email });
   return user;
 }
@@ -189,5 +240,7 @@ async function findUser(email) {
 module.exports = {
   login,
   register,
-  resetPwd
+  resetPwd,
+  findUser,
+  updatePassword
 };
