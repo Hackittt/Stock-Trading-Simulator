@@ -25,6 +25,13 @@ class StockModel {
                 name : String,              // 股票名
                 code : {type : String, unique : true},              // 代码
                 position : Array,           // 所属板块
+                // high : Number,              // 今日最高价
+                // low : Number,               // 昨日最低价
+                // current : Number,           // 现价
+                // turnover : Number,          // 换手率
+                // amplitude : Number,         // 振幅
+                // amount : Number,            // 成交额
+                // outstanding_shares : Number, // 流通股
             });
 
             // 日K
@@ -51,10 +58,11 @@ class StockModel {
             // 持仓
             this.positionSchema = mongoose.Schema({
                 userid : {type : String, index : true},  // 用户id
-                code : String,    // 股票代码
+                code : {type : String, index : true},    // 股票代码
                 count : Number,   // 数量
                 cost : Number     // 持仓成本
             });
+            this.positionSchema.index({userid : 1, code : 2},{unique : true});
             
             // 自选
             this.optionalSchema = mongoose.Schema({
@@ -74,6 +82,7 @@ class StockModel {
         this.optional = mongoose.model('optional', this.optionalSchema);
         this.fund = mongoose.model('fund', this.fundSchema);
 
+        return;
         this.start();
         this.render();
     }
@@ -493,5 +502,12 @@ function Singleton(){
     }
     return res;
 }
+
+// let Singleton = function() {
+//     if (res === null) {
+//         res = new StockModel();
+//     }
+//     return res;
+// }
 
 module.exports = Singleton;
