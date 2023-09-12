@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
-import { Table, Space, Button, Layout, Modal, Input } from 'antd';
+import { Table, Space, Button, Modal, Input, Layout } from 'antd';
 import ListNavBar from '../components/listNavBar';
 
-class Position extends Component {
+class Optional extends Component {
     state = {
-        searchParams: this.props.params[0],
-        setSearchParams: this.props.params[1],
+        searchParams : this.props.params[0],
+        setSearchParams : this.props.params[1],
 
         columns : [
             {
@@ -46,20 +46,6 @@ class Position extends Component {
                 sorter : (a, b) => a.amplitude - b.amplitude
             },
             {
-                title : '股数',
-                dataIndex : 'count',
-                key : 'count',
-                align : 'right',
-                sorter : (a, b) => a.count - b.count
-            },
-            {
-                title : '持股成本',
-                dataIndex : 'cost',
-                key : 'cost',
-                align : 'right',
-                sorter : (a, b) => a.cost - b.cost
-            },
-            {
                 title : '操作',
                 key : 'action',
                 align : 'center',
@@ -96,17 +82,70 @@ class Position extends Component {
     };
 
     componentDidMount() {
-        let page = this.state.searchParams.get('page');
-        if (page === null) {
-            page = 1;
-        }
-        axios.get('api/position')
-            .then(res => {
-                this.setState({
-                    stocks: res.data,
-                    isLoaded: true
-                });
+        axios.get('api/optional')
+        .then(res => {
+            this.setState({
+                stocks : res.data,
+                isLoaded : true
             });
+        });
+    }
+
+    // 添加自选
+    addOptional(code) {
+        let data = {code : code};
+        axios.post('api/addoptional', data)
+        .then(res => {
+            console.log(res);
+        }).catch(error => {
+            console.log(error);
+            return;
+        });
+
+        axios.get('api/optional')
+        .then(res => {
+            this.setState({
+                stocks : res.data,
+                isLoaded : true
+            });
+        });
+    }
+
+
+    // 删除自选
+    delOptional(code) {
+        let data = {code : code};
+        axios.post('api/deloptional', data)
+        .then(res => {
+            console.log(res);
+        }).catch(error => {
+            console.log(error);
+            return;
+        });
+
+        axios.get('api/optional')
+        .then(res => {
+            this.setState({
+                stocks : res.data,
+                isLoaded : true
+            });
+        });
+    }
+
+    // 交易
+    exchange(code, count) {
+        axios.post('api/exchange', [code, count])
+        .then(res => {
+            const data = res.data;
+            if (data === false) {
+                console.log('exchange false');
+            } else if (data === true) {
+                console.log('true');
+            }
+        })
+        .catch(error => {
+            console.log(error);
+        });
     }
 
     render() {
@@ -160,8 +199,8 @@ class Position extends Component {
 }
 
 export default (props) => (
-    <Position
+    <Optional
         {...props}
-        params={useSearchParams()}
+        params = {useSearchParams()}
     />
 );

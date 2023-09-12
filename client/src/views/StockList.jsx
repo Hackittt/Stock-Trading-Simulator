@@ -94,6 +94,18 @@ class StockList extends Component {
     };
 
     componentDidMount() {
+        // 配置拦截器
+        axios.interceptors.request.use(
+          config => {
+            const token = localStorage.getItem('token');
+            if (token) {
+              config.headers['Authorization'] = `Bearer ${token}`;
+            }
+            return config;
+          }, error => {
+            return Promise.reject(error);
+          }
+        );
         let page = this.state.searchParams.get('page');
         if (page === null) {
             page = 1;
@@ -126,7 +138,8 @@ class StockList extends Component {
             return;
         });
 
-        this.modifyHistory(this.state.currentPage);
+        delete this.historyList[this.state.currentPage];
+        this.changeList(this.state.currentPage);
     }
 
 
@@ -141,7 +154,8 @@ class StockList extends Component {
             return;
         });
 
-        this.modifyHistory(this.state.currentPage);
+        delete this.historyList[this.state.currentPage];
+        this.changeList(this.state.currentPage);
     }
 
     // 更新列表
@@ -154,7 +168,6 @@ class StockList extends Component {
             return;
         }
 
-        console.log(page);
         axios.get('api/hq?page=' + page)
         .then(res => {
             for (let i = 0; i < res.data.length; i++) {

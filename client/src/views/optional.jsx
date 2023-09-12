@@ -82,16 +82,69 @@ class Optional extends Component {
     };
 
     componentDidMount() {
-        let page = this.state.searchParams.get('page');
-        if (page === null) {
-            page = 1;
-        }
         axios.get('api/optional')
         .then(res => {
             this.setState({
                 stocks : res.data,
                 isLoaded : true
             });
+        });
+    }
+
+    // 添加自选
+    addOptional(code) {
+        let data = {code : code};
+        axios.post('api/addoptional', data)
+        .then(res => {
+            console.log(res);
+        }).catch(error => {
+            console.log(error);
+            return;
+        });
+
+        axios.get('api/optional')
+        .then(res => {
+            this.setState({
+                stocks : res.data,
+                isLoaded : true
+            });
+        });
+    }
+
+
+    // 删除自选
+    delOptional(code) {
+        let data = {code : code};
+        axios.post('api/deloptional', data)
+        .then(res => {
+            console.log(res);
+        }).catch(error => {
+            console.log(error);
+            return;
+        });
+
+        axios.get('api/optional')
+        .then(res => {
+            this.setState({
+                stocks : res.data,
+                isLoaded : true
+            });
+        });
+    }
+
+    // 交易
+    exchange(code, count) {
+        axios.post('api/exchange', [code, count])
+        .then(res => {
+            const data = res.data;
+            if (data === false) {
+                console.log('exchange false');
+            } else if (data === true) {
+                console.log('true');
+            }
+        })
+        .catch(error => {
+            console.log(error);
         });
     }
 
