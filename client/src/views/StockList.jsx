@@ -106,6 +106,7 @@ class StockList extends Component {
             return Promise.reject(error);
           }
         );
+
         let page = this.state.searchParams.get('page');
         if (page === null) {
             page = 1;
@@ -223,8 +224,10 @@ class StockList extends Component {
 
     // 交易
     exchange(code, count) {
-        axios.post('api/exchange', [code, count])
-        .then(res => {
+        axios.post('api/exchange', {
+            code : code,
+            count : count
+        }).then(res => {
             const data = res.data;
             if (data === false) {
                 console.log('exchange false');
@@ -267,7 +270,7 @@ class StockList extends Component {
                             onCancel={this.closeModal}
                             centered={true}
                             confirmLoading={false}
-                            onOk={this.exchange(this.state.exchangeCode, this.state.exchangeCount)}
+                            onOk={() => this.exchange(this.state.exchangeCode, this.state.exchangeCount)}
                         >
                             <Input 
                                 placeholder='数量'

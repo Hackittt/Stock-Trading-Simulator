@@ -134,8 +134,10 @@ class Optional extends Component {
 
     // 交易
     exchange(code, count) {
-        axios.post('api/exchange', [code, count])
-        .then(res => {
+        axios.post('api/exchange', {
+            code : code,
+            count : count
+        }).then(res => {
             const data = res.data;
             if (data === false) {
                 console.log('exchange false');
@@ -178,7 +180,7 @@ class Optional extends Component {
                             onCancel={this.closeModal}
                             centered={true}
                             confirmLoading={false}
-                            onOk={this.exchange(this.state.exchangeCode, this.state.exchangeCount)}
+                            onOk={() => this.exchange(this.state.exchangeCode, this.state.exchangeCount)}
                         >
                             <Input 
                                 placeholder='数量'
