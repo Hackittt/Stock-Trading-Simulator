@@ -82,6 +82,19 @@ class Optional extends Component {
     };
 
     componentDidMount() {
+        // 添加拦截器
+        axios.interceptors.request.use(
+                config => {
+                    const token = localStorage.getItem('token');
+                    if (token) {
+                    config.headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    return config;
+                }, error => {
+                    return Promise.reject(error);
+                }
+                );
+
         axios.get('api/optional')
         .then(res => {
             for (let i = 0; i < res.data.length; i++) {
@@ -210,4 +223,4 @@ export default (props) => (
         {...props}
         params = {useSearchParams()}
     />
-)
+);

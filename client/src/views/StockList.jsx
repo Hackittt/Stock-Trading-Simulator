@@ -34,7 +34,7 @@ class StockList extends Component {
                 title : '现价',
                 dataIndex : 'close',
                 key : 'close',
-                sorter : (a, b) => a.price - b.price
+                sorter : (a, b) => a.close - b.close
             },
             {
                 title : '成交量',
@@ -196,6 +196,7 @@ class StockList extends Component {
 
     // 筛选器
     filter = (params) => {
+        console.log(params);
         axios.post('api/sizer', params)
         .then(res => {
             for (let i = 0; i < res.data.length; i++) {
@@ -306,4 +307,4 @@ export default (props) => (
         params = {useSearchParams()}
         navigate = {useNavigate()}
     />
-)
+);

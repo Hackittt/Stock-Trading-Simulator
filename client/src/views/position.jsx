@@ -111,8 +111,8 @@ class Optional extends Component {
         axios.get('api/position')
         .then(res => {
             for (let i = 0; i < res.data.length; i++) {
-                res[i].cost = res.data[i].cost ? res.data[i].cost.toFixed(2) : 0;
-                res[i].amplitude = res.data[i].amplitude  ? res.data[i].cost.toFixed(2) : 0;
+                res.data[i].cost = res.data[i].cost ? res.data[i].cost.toFixed(2) : 0;
+                res.data[i].amplitude = res.data[i].amplitude  ? res.data[i].amplitude.toFixed(2) : 0;
             }
             this.setState({
                 stocks : res.data,
@@ -237,4 +237,4 @@ export default (props) => (
         {...props}
         params = {useSearchParams()}
     />
-)
+);
