@@ -2,13 +2,12 @@ const express = require('express');
 const router = express.Router();
 const querystring = require('querystring');
 const url = require('url');
-const model = require('../controller/taskService');
-const mongoose = require('mongoose');
+const Singleton = require('../controller/taskService');
 
 router.use(express.json());
 router.use(express.urlencoded({extended : true}));
 
-let stockModel = model();
+let stockModel = Singleton();
 
 // 获取行情
 router.get('/hq', async(req, res) => {
@@ -17,9 +16,6 @@ router.get('/hq', async(req, res) => {
     let params = querystring.parse(arg);
     if (!params.page) {
         params.page = 1;
-    } else if (params.page == 0) {
-        res.json([]);
-        return;
     }
     
     let list = await stockModel.getStockList(params.page);
@@ -66,7 +62,7 @@ router.post('/sizer', async(req, res) => {
             body[i].high = body[i].high ? parseInt(body[i].high) : 1e18;
         }
     }
-    console.log()
+
     let list = await stockModel.sizer(body);
     for (let i = 0; i < list.length; i++) {
         list[i].name = await stockModel.getStockName(list[i].code);
@@ -97,9 +93,6 @@ router.get('/history', async(req, res) => {
 // 获取用户自选列表
 router.get('/optional', async(req, res) => {
     let optional = await stockModel.getOptional(req.user.email);
-    if (!optional.length) {
-        return [];
-    }
     let codeArray = optional[0].codeArray;
     let list = [];
     for (let i = 0; i < codeArray.length; i++) {
@@ -151,11 +144,6 @@ router.get('/position', async(req, res) => {
         item.amplitude = stockModel.calAmplitude(item.high, item.low);
         item.count = await stockModel.getPositionCount(req.user.email, item.code);
         item.cost = await stockModel.getPositionCost(req.user.email, item.code);
-        if (req.user.email) {
-            item.isOptional = await stockModel.isOptional(req.user.email, item.code);
-        } else {
-            item.isOptional = false;
-        }
         return item;
     })
 
@@ -199,38 +187,20 @@ router.post('/exchange', async(req, res) => {
         return;
     }
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-        let count = parseInt(req.body.count);
-        let code = req.body.code;
-        let cost = await stockModel.getClose(code);
-        let remain = await stockModel.getFund(req.user.email);
-
-        if (remain - count * cost < 0) {
-            res.json(false);
-            return;
-        }
-        let result = await stockModel.modifyPosition(req.user.email, code, count, count < 0 ? 0 : count * cost);
-        console.log(result);
-        if (result) {
-            await stockModel.modifyFund(req.user.email, -count * cost);
-        } else {
-            res.json(false);
-            return;
-        }
-
-        
-        await session.commitTransaction();
-        session.endSession();
-        res.json(true);
-    } catch(error) {
-        console.error(error);
-        await session.abortTransaction();
-        session.endSession();
-        res.status(500).send('Internal Server Error');
-    };
+    let count = parseInt(req.body.count);
+    let code = req.body.code;
+    let cost = await stockModel.getClose(code);
+    let remain = await stockModel.getFund(req.user.email);
+    console.log(remain);
+    if (remain + count * cost < 0) {
+        res.json(false);
+        return;
+    }
+    let result = await stockModel.modifyPosition(req.user.email, code, count, count < 0 ? 0 : count * cost);
+    if (result) {
+        await stockModel.modifyFund(req.user.email, -count * cost);
+    }
+    res.json(true);
 });
 
 // 获取股票总数
@@ -239,10 +209,10 @@ router.get('/stockscount', async(req, res) => {
     res.json(count);
 });
 
-// 获取用户资金
-router.post('/userfund', async(req, res) => {
-    let remain = await stockModel.getFund(req.user.email);
-    res.json(remain);
-})
+// // 获取用户资金
+// router.post('/userfund', async(req, res) => {
+//     let remain = await stockModel.getFund(req.user.email);
+//     res.json(remain);
+// })
 
 module.exports = router;

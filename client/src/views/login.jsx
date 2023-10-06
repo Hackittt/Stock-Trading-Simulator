@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -18,7 +18,40 @@ import { useNavigate } from 'react-router-dom';
 function LogIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+
+
+  
+
+  useEffect(() => {
+    const tokenIsValid = isTokenValid();
+  
+    if (tokenIsValid) {
+      // 令牌有效，跳转到首页
+      navigate('/stocklist');
+    }
+  }, [navigate]);
+
+
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('rememberedEmail');
+    if (rememberedEmail) {
+      setEmail(rememberedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
+
+
+  const isTokenValid = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // 本地存储中没有令牌，返回 false
+      return false;
+    }
+    return true;
+  };
 
 
   const handleSubmit = async (e) => {
@@ -35,12 +68,21 @@ function LogIn() {
       const token = response.data.data.token;
       const msg = response.data.msg;
 
+
       if (response.data.code === 0) {
         // 登录成功
 
         console.log(msg);
 
         localStorage.setItem('token', token);
+
+        if (rememberMe) {
+          // 如果用户选择记住我，保存用户名
+          localStorage.setItem('rememberedEmail', email);
+        } else {
+          // 否则清除保存的用户名
+          localStorage.removeItem('rememberedEmail');
+        }
 
 
         axios.interceptors.request.use(
@@ -55,7 +97,7 @@ function LogIn() {
           }
         );
 
-       
+
         navigate('/profile');
 
       } else {
@@ -107,7 +149,14 @@ function LogIn() {
               onChange={(e) => setPassword(e.target.value)}
             />
             <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
+              control={
+                <Checkbox
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  color="primary"
+                  value="remember"
+                />
+              }
               label="Remember me"
             />
             <Button
@@ -120,13 +169,13 @@ function LogIn() {
               Login
             </Button>
             <Grid container>
-              <Grid item xs>
+              {/* <Grid item xs>
                 <Link href="#" variant="body2">
                   Forgot password?
                 </Link>
-              </Grid>
+              </Grid> */}
               <Grid item>
-                <Link href="#" variant="body2">
+                <Link href="/signup" variant="body2">
                   {"Sign Up"}
                 </Link>
               </Grid>

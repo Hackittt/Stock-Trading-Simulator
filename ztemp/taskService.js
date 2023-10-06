@@ -25,6 +25,13 @@ class StockModel {
                 name : String,              // 股票名
                 code : {type : String, unique : true},              // 代码
                 position : Array,           // 所属板块
+                // high : Number,              // 今日最高价
+                // low : Number,               // 昨日最低价
+                // current : Number,           // 现价
+                // turnover : Number,          // 换手率
+                // amplitude : Number,         // 振幅
+                // amount : Number,            // 成交额
+                // outstanding_shares : Number, // 流通股
             });
 
             // 日K
@@ -52,8 +59,8 @@ class StockModel {
             this.positionSchema = mongoose.Schema({
                 userid : {type : String, index : true},  // 用户id
                 code : {type : String, index : true},    // 股票代码
-                count : {type : Number, default : 0},   // 数量
-                cost : {type : Number, default : 0}     // 持仓成本
+                count : Number,   // 数量
+                cost : Number     // 持仓成本
             });
             this.positionSchema.index({userid : 1, code : 2},{unique : true});
             
@@ -310,7 +317,7 @@ class StockModel {
         if (old.length) {
             position = old[0];
         }
- 
+
         if (position.count + count < 0) {
             return false;
         }
@@ -322,7 +329,6 @@ class StockModel {
             position.count += count;
             position.cost = position.cost * ((position.count + count) / position.count);
         }
-        console.log(position.cost);
         position.save().then(result => {
             console.log(result);
         }).catch(error => {
@@ -448,13 +454,13 @@ class StockModel {
     }
 
 
-    // 初始化用户资金
+    // 分配用户
     async createFund(userid) {
         let isExist = await this.fund.count({userid : userid});
         if (isExist === 0) {
             let newUser = new this.fund();
             newUser.userid = userid;
-            newUser.fund = 1e6;
+            newUser.fund = 1e7;
             newUser.save().then(result => {
                 console.log(result);
             }).catch(error => {
@@ -463,9 +469,9 @@ class StockModel {
         }
     }
 
-    // 获取剩余资金
+    获取剩余资金
     async getFund(userid) {
-        await this.createFund(userid);
+        this.createFund(userid);
 
         let res = await this.fund.find({userid : userid});
         console.log(res);
@@ -474,7 +480,8 @@ class StockModel {
 
     // 修改资金
     async modifyFund(userid, count) {
-        await this.createFund(userid);
+        this.createFund(userid);
+        console.log(count);
 
         let list = await this.fund.find({userid : userid});
         let fund = list[0];
@@ -496,4 +503,11 @@ function Singleton(){
     return res;
 }
 
-module.exports = {Singleton};
+// let Singleton = function() {
+//     if (res === null) {
+//         res = new StockModel();
+//     }
+//     return res;
+// }
+
+module.exports = Singleton;

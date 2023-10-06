@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 // const {jwtAuth, decode} = require('../utils/user-jwt');
 const { USER, PERSONAL } = require('../db/dbConfig')
+// const {createFund} = require('./taskService')
 const {
   CODE_ERROR,
   CODE_SUCCESS,
@@ -120,7 +121,7 @@ async function registerto(req, res, next) {
 
         await newPersonal.save();
 
-
+        // await createFund(email);
         const token = settoken(email);
 
         const userData = {

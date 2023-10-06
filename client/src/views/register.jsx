@@ -11,9 +11,30 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import axios from 'axios';
 
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+
+import { useNavigate } from 'react-router-dom';
+
 function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+  const [openDialog, setOpenDialog] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState('');
+
+
+  const handleOpenDialog = (message) => {
+    setDialogMessage(message);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
 
 
   const handleSubmit = async (e) => {
@@ -24,9 +45,9 @@ function SignUp() {
         email: email,
         password: password,
       });
-      
+
       console.log('成功响应：', response);
-      
+
       const token = response.data.data.token;
       const msg = response.data.msg;
 
@@ -35,11 +56,14 @@ function SignUp() {
         console.log(msg);
 
         localStorage.setItem('token', token);
-        
+
+        navigate('/login');
+
       } else {
         // 注册失败
         console.log(msg);
-        
+        handleOpenDialog('注册失败');
+
       }
     } catch (error) {
       // 处理请求错误
@@ -99,8 +123,8 @@ function SignUp() {
               </Link>
             </Grid>
             <Grid item>
-              <Link href="#" variant="body2">
-                {"Sign Up"}
+              <Link href="/login" variant="body2">
+                {"Sign in"}
               </Link>
             </Grid>
           </Grid>
@@ -110,7 +134,19 @@ function SignUp() {
         &copy; {new Date().getFullYear()} Our Sweet Web
       </Box>
     </Container>
+    <Dialog open={openDialog} onClose={handleCloseDialog}>
+<DialogTitle>注册失败</DialogTitle>
+<DialogContent>
+  <DialogContentText>{dialogMessage}</DialogContentText>
+</DialogContent>
+<DialogActions>
+  <Button onClick={handleCloseDialog}>关闭</Button>
+</DialogActions>
+</Dialog>
     </div>
+
+
+
   );
 }
 
