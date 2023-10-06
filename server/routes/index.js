@@ -1,13 +1,27 @@
 const express = require('express');
-const userRouter = require('./users'); 
-// const taskRouter = require('./tasks'); 
-const {decode} = require('../utils/user-jwt'); 
 const router = express.Router(); 
+const userRouter = require('./users'); 
+const taskRouter = require('./tasks'); 
+const personalRouter = require('./personal'); 
+const {jwtAuth, getKey, decode} = require('../utils/user-jwt'); 
 
-// router.use(jwtAuth); 
 
+router.use(jwtAuth); 
+
+// 加载用户路由
 router.use('/api', userRouter); 
-// router.use('/api', taskRouter); 
+
+//加载业务功能路由
+router.use('/api', taskRouter); 
+
+//加载个人信息路由
+router.use('/api', personalRouter); 
+
+
+router.get('/protected', (req, res) => {
+  res.json({ message: 'Access granted to protected route' });
+});
+
 
 
 router.use((err, req, res, next) => {

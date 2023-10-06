@@ -2,14 +2,23 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import StockFilter from '../components/stockFilter';
-import { Table, Space, Button, Pagination, Layout, Modal, Input } from 'antd';
+
+import { Table, Space, Button, Pagination, Layout, Modal, Input, Radio, Result } from 'antd';
 import ListNavBar from '../components/listNavBar';
+import FundInfo from '../components/fundInfo';
+
 
 class StockList extends Component {
     state = {
         exchangeCount : 0,
         exchangeCode : -1,
+
+        exchangeType : null,
+
         showModal : false,
+        showModal2 : false,
+        showModal3 : false,
+
         searchParams : this.props.params[0],
         setSearchParams : this.props.params[1],
         navigate : this.props.navigate,
@@ -26,15 +35,19 @@ class StockList extends Component {
                 key : 'name'
             },
             {
-                title : '开盘价',
+
+                title : '开盘价(￥)',
+
                 dataIndex : 'open',
                 key : 'open'
             },
             {
-                title : '现价',
+
+                title : '现价(￥)',
                 dataIndex : 'close',
                 key : 'close',
-                sorter : (a, b) => a.price - b.price
+                sorter : (a, b) => a.close - b.close
+
             },
             {
                 title : '成交量',
@@ -57,7 +70,9 @@ class StockList extends Component {
                     if (!record.isOptional) {
                         return (
                             <Space size="middle">
-                                <Button type='primary' onClick={() => this.addOptional(record.code)}>加自选</Button>
+
+                                <Button type='primary' onClick={() => this.addOptional(record.code)}>收藏</Button>
+
                             </Space>
                         );
                     } else {
@@ -93,6 +108,23 @@ class StockList extends Component {
         this.setState({ showModal: false }); // 更新 showModal 的值为 false
     };
 
+
+    showModal2 = () => {
+        this.setState({showModal2 : true});
+    }
+
+    closeModal2 = () => {
+        this.setState({showModal2 : false});
+    }
+
+    showModal3 = () => {
+        this.setState({showModal3 : true});
+    }
+
+    closeModal3 = () => {
+        this.setState({showModal3 : false});
+    }
+
     componentDidMount() {
         // 配置拦截器
         axios.interceptors.request.use(
@@ -106,6 +138,7 @@ class StockList extends Component {
             return Promise.reject(error);
           }
         );
+
         let page = this.state.searchParams.get('page');
         if (page === null) {
             page = 1;
@@ -132,7 +165,7 @@ class StockList extends Component {
         let data = {code : code};
         axios.post('api/addoptional', data)
         .then(res => {
-            console.log(res);
+
         }).catch(error => {
             console.log(error);
             return;
@@ -195,6 +228,9 @@ class StockList extends Component {
 
     // 筛选器
     filter = (params) => {
+
+        console.log(params);
+
         axios.post('api/sizer', params)
         .then(res => {
             for (let i = 0; i < res.data.length; i++) {
@@ -223,18 +259,29 @@ class StockList extends Component {
 
     // 交易
     exchange(code, count) {
-        axios.post('api/exchange', [code, count])
-        .then(res => {
+
+        if (this.state.exchangeType === 'out') {
+            count = -count;
+        }
+
+        axios.post('api/exchange', {
+            code : code,
+            count : count
+        }).then(res => {
             const data = res.data;
             if (data === false) {
-                console.log('exchange false');
+                this.showModal3();
             } else if (data === true) {
-                console.log('true');
+                this.showModal2();
             }
         })
         .catch(error => {
             console.log(error);
         });
+
+
+        this.closeModal();
+
     }
 
     render() {
@@ -267,17 +314,76 @@ class StockList extends Component {
                             onCancel={this.closeModal}
                             centered={true}
                             confirmLoading={false}
-                            onOk={this.exchange(this.state.exchangeCode, this.state.exchangeCount)}
+
+                            onOk={() => this.exchange(this.state.exchangeCode, this.state.exchangeCount)}
+                            destroyOnClose={true}
                         >
+                            <FundInfo code={this.state.exchangeCode} />
+                            <>
+                                <Radio.Group
+                                    defaultValue='in'
+                                    defaultActiveKey='a'
+                                    buttonStyle='solid'
+                                    style={{
+                                        marginTop : 10,
+                                        marginBottom : 10
+                                    }}
+                                    onChange={(e) => {
+                                        this.setState({exchangeType : e.target.value});
+                                    }}
+                            >
+                                    <Radio.Button value="in">买入</Radio.Button>
+                                    <Radio.Button value="out">卖出</Radio.Button>
+                                </Radio.Group>
+                            </>
+
                             <Input 
                                 placeholder='数量'
                                 type='number'
                                 style={{
-                                    margin : 'auto'
+                                    margin : 'auto',
+                                    marginTop : 10,
+                                    marginBottom : 15
+
                                 }}
                                 onChange={e => this.setState({exchangeCount : e.target.value})}
                             />
                         </Modal>
+
+                        <Modal
+                            open={this.state.showModal2}
+                            onCancel={this.closeModal2}
+                            centered={true}
+                            confirmLoading={false}
+                            onOk={this.closeModal2}
+                            destroyOnClose={false}
+                            footer={false}
+                        >
+                            <Result
+                                status="success"
+                                title="交易成功"
+                                extra={
+                                    <Button type='primary' onClick={this.closeModal2}>确定</Button>
+                                }
+                            />
+                        </Modal>
+                        <Modal
+                            open={this.state.showModal3}
+                            onCancel={this.closeModal3}
+                            centered={true}
+                            confirmLoading={false}
+                            onOk={this.closeModal3}
+                            destroyOnClose={false}
+                            footer={false}
+                        >
+                            <Result
+                                title="交易失败"
+                                extra={
+                                    <Button type='primary' onClick={this.closeModal3}>确定</Button>
+                                }
+                            />
+                        </Modal>
+
                         <ListNavBar defaultActiveKey={'stocklist'} />
                         <StockFilter filter={this.filter} />
                         <Table dataSource={this.state.stocks} columns={this.state.columns} pagination={false} />
