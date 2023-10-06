@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
+
 import { Table, Space, Button, Modal, Input, Layout, Result, Radio } from 'antd';
 import ListNavBar from '../components/listNavBar';
 import FundInfo from '../components/fundInfo';
@@ -32,12 +33,16 @@ class Optional extends Component {
                 key : 'name'
             },
             {
+
                 title : '开盘价(￥)',
+
                 dataIndex : 'open',
                 key : 'open'
             },
             {
+
                 title : '现价(￥)',
+
                 dataIndex : 'close',
                 key : 'close',
                 sorter : (a, b) => a.price - b.price
@@ -63,7 +68,9 @@ class Optional extends Component {
                     if (!record.isOptional) {
                         return (
                             <Space size="middle">
+
                                 <Button onClick={() => this.addOptional(record.code)}>收藏</Button>
+
                             </Space>
                         );
                     } else {
@@ -90,6 +97,7 @@ class Optional extends Component {
             }
         ]
     };
+
 
     showModal = (code) => {
         this.setState({ showModal: true, exchangeCode : code }); // 更新 showModal 的值为 true
@@ -134,6 +142,7 @@ class Optional extends Component {
             for (let i = 0; i < res.data.length; i++) {
                 res.data[i].amplitude = res.data[i].amplitude ? res.data[i].amplitude.toFixed(2) : 0;
             }
+
             this.setState({
                 stocks : res.data,
                 isLoaded : true
@@ -184,6 +193,7 @@ class Optional extends Component {
 
     // 交易
     exchange(code, count) {
+
         if (this.state.exchangeType === 'out') {
             count = -count;
         }
@@ -197,13 +207,16 @@ class Optional extends Component {
                 this.showModal3();
             } else if (data === true) {
                 this.showModal2();
+
             }
         })
         .catch(error => {
             console.log(error);
         });
 
+
         this.closeModal();
+
     }
 
     render() {
@@ -236,6 +249,7 @@ class Optional extends Component {
                             onCancel={this.closeModal}
                             centered={true}
                             confirmLoading={false}
+
                             onOk={() => this.exchange(this.state.exchangeCode, this.state.exchangeCount)}
                             destroyOnClose={true}
                         >
@@ -257,17 +271,21 @@ class Optional extends Component {
                                     <Radio.Button value="out">卖出</Radio.Button>
                                 </Radio.Group>
                             </>
+
                             <Input 
                                 placeholder='数量'
                                 type='number'
                                 style={{
+
                                     margin : 'auto',
                                     marginTop : 10,
                                     marginBottom : 15
+
                                 }}
                                 onChange={e => this.setState({exchangeCount : e.target.value})}
                             />
                         </Modal>
+
                         <Modal
                             open={this.state.showModal2}
                             onCancel={this.closeModal2}
@@ -301,6 +319,7 @@ class Optional extends Component {
                                 }
                             />
                         </Modal>
+
                         <ListNavBar defaultActiveKey={'optional'} />
                         <Table dataSource={this.state.stocks} columns={this.state.columns} pagination={false} />
                     </Layout>

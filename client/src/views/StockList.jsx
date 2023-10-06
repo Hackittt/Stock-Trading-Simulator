@@ -2,14 +2,17 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import StockFilter from '../components/stockFilter';
+
 import { Table, Space, Button, Pagination, Layout, Modal, Input, Radio, Result } from 'antd';
 import ListNavBar from '../components/listNavBar';
 import FundInfo from '../components/fundInfo';
+
 
 class StockList extends Component {
     state = {
         exchangeCount : 0,
         exchangeCode : -1,
+
         exchangeType : null,
 
         showModal : false,
@@ -32,15 +35,19 @@ class StockList extends Component {
                 key : 'name'
             },
             {
+
                 title : '开盘价(￥)',
+
                 dataIndex : 'open',
                 key : 'open'
             },
             {
+
                 title : '现价(￥)',
                 dataIndex : 'close',
                 key : 'close',
                 sorter : (a, b) => a.close - b.close
+
             },
             {
                 title : '成交量',
@@ -63,7 +70,9 @@ class StockList extends Component {
                     if (!record.isOptional) {
                         return (
                             <Space size="middle">
+
                                 <Button type='primary' onClick={() => this.addOptional(record.code)}>收藏</Button>
+
                             </Space>
                         );
                     } else {
@@ -99,6 +108,7 @@ class StockList extends Component {
         this.setState({ showModal: false }); // 更新 showModal 的值为 false
     };
 
+
     showModal2 = () => {
         this.setState({showModal2 : true});
     }
@@ -114,7 +124,6 @@ class StockList extends Component {
     closeModal3 = () => {
         this.setState({showModal3 : false});
     }
-
 
     componentDidMount() {
         // 配置拦截器
@@ -156,6 +165,7 @@ class StockList extends Component {
         let data = {code : code};
         axios.post('api/addoptional', data)
         .then(res => {
+
         }).catch(error => {
             console.log(error);
             return;
@@ -218,7 +228,9 @@ class StockList extends Component {
 
     // 筛选器
     filter = (params) => {
+
         console.log(params);
+
         axios.post('api/sizer', params)
         .then(res => {
             for (let i = 0; i < res.data.length; i++) {
@@ -247,6 +259,7 @@ class StockList extends Component {
 
     // 交易
     exchange(code, count) {
+
         if (this.state.exchangeType === 'out') {
             count = -count;
         }
@@ -266,7 +279,9 @@ class StockList extends Component {
             console.log(error);
         });
 
+
         this.closeModal();
+
     }
 
     render() {
@@ -299,6 +314,7 @@ class StockList extends Component {
                             onCancel={this.closeModal}
                             centered={true}
                             confirmLoading={false}
+
                             onOk={() => this.exchange(this.state.exchangeCode, this.state.exchangeCount)}
                             destroyOnClose={true}
                         >
@@ -320,6 +336,7 @@ class StockList extends Component {
                                     <Radio.Button value="out">卖出</Radio.Button>
                                 </Radio.Group>
                             </>
+
                             <Input 
                                 placeholder='数量'
                                 type='number'
@@ -327,10 +344,12 @@ class StockList extends Component {
                                     margin : 'auto',
                                     marginTop : 10,
                                     marginBottom : 15
+
                                 }}
                                 onChange={e => this.setState({exchangeCount : e.target.value})}
                             />
                         </Modal>
+
                         <Modal
                             open={this.state.showModal2}
                             onCancel={this.closeModal2}
@@ -364,6 +383,7 @@ class StockList extends Component {
                                 }
                             />
                         </Modal>
+
                         <ListNavBar defaultActiveKey={'stocklist'} />
                         <StockFilter filter={this.filter} />
                         <Table dataSource={this.state.stocks} columns={this.state.columns} pagination={false} />
